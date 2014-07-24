@@ -302,6 +302,15 @@ void NetworkAccessManager::handleStarted()
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     if (!reply)
         return;
+        
+    QByteArray chunk( reply->peek(reply->size()) );
+    if (m_content.contains(reply)) {
+        m_content[reply].append(chunk);
+    }
+    else {
+        m_content[reply] = chunk;
+    }
+        
     if (m_started.contains(reply))
         return;
 
@@ -365,6 +374,8 @@ void NetworkAccessManager::handleFinished(QNetworkReply *reply, const QVariant &
         header["value"] = QString::fromUtf8(reply->rawHeader(headerName));
         headers += header;
     }
+    
+    QByteArray content = m_content.value(reply, QByteArray());
 
     QVariantMap data;
     data["stage"] = "end";
@@ -376,9 +387,12 @@ void NetworkAccessManager::handleFinished(QNetworkReply *reply, const QVariant &
     data["redirectURL"] = reply->header(QNetworkRequest::LocationHeader);
     data["headers"] = headers;
     data["time"] = QDateTime::currentDateTime();
+    data["body"] = content.toBase64().data();
+    data["bodySize"] = content.size();
 
     m_ids.remove(reply);
     m_started.remove(reply);
+    m_content.remove(reply);
 
     emit resourceReceived(data);
 }

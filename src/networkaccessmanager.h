@@ -108,6 +108,7 @@ private slots:
 private:
     QHash<QNetworkReply*, int> m_ids;
     QSet<QNetworkReply*> m_started;
+    QHash<QNetworkReply*, QByteArray> m_content;
     int m_idCounter;
     QNetworkDiskCache* m_networkDiskCache;
     QVariantMap m_customHeaders;
